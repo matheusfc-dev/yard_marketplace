@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<h1>Moderation log</h1>
+<%- include('../partials/admin-nav') %>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>When</th><th>Admin</th><th>Action</th><th>Target</th><th>Note</th></tr></thead>
+  <tbody>
+  <% log.forEach(function (a) { %>
+    <tr>
+      <td class="small nowrap"><%= formatDate(a.created_at) %></td>
+      <td>@<%= a.admin || 'deleted' %></td>
+      <td><%= a.action.replace(/_/g, ' ') %></td>
+      <td><% if (a.target_type === 'user') { %><a href="/admin/users/<%= a.target_id %>">user #<%= a.target_id %></a><% } else if (a.target_type === 'listing') { %><a href="/listings/<%= a.target_id %>">listing #<%= a.target_id %></a><% } else if (a.target_type === 'order') { %><a href="/orders/<%= a.target_id %>">order #<%= a.target_id %></a><% } else { %><%= a.target_type %> #<%= a.target_id %><% } %></td>
+      <td class="small"><%= a.note %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<% if (!log.length) { %><p class="muted">No actions yet.</p><% } %>
+<%- include('../partials/footer') %>

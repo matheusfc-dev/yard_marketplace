@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<div class="inbox <%= active ? 'has-active' : '' %>">
+  <aside class="conv-list">
+    <h2>Messages</h2>
+    <% if (!conversations.length) { %>
+      <p class="muted">No conversations yet. Find something you like and message the seller!</p>
+    <% } %>
+    <% conversations.forEach(function (c) { %>
+      <a href="/messages/<%= c.id %>" class="conv <%= active && active.id === c.id ? 'active' : '' %> <%= c.unread ? 'unread' : '' %>">
+        <img src="<%= c.cover ? '/uploads/' + c.cover : '/static/img/placeholder.svg' %>" alt="">
+        <span class="conv-text">
+          <span class="conv-top"><strong><%= c.other_name %></strong><span class="muted small"><%= timeAgo(c.updated_at) %></span></span>
+          <span class="small"><span class="tag tag-<%= c.role %>"><%= c.role %></span> <%= c.listing_title %></span>
+          <span class="muted small ellipsis"><%= c.last_body %></span>
+        </span>
+        <% if (c.unread) { %><span class="badge"><%= c.unread %></span><% } %>
+      </a>
+    <% }) %>
+  </aside>
+
+  <section class="chat">
+    <% if (!active) { %>
+      <div class="chat-empty muted">Select a conversation to start chatting.</div>
+    <% } else {
+      const iAmBuyer = active.buyer_id === currentUser.id;
+      const otherName = iAmBuyer ? active.seller_name : active.buyer_name;
+      const otherUser = iAmBuyer ? active.seller_username : active.buyer_username;
+      const closed = active.buyer_banned || active.seller_banned;
+    %>
+      <header class="chat-head">
+        <a href="/messages" class="back-link" aria-label="Back to conversations">←</a>
+        <img src="<%= active.cover ? '/uploads/' + active.cover : '/static/img/placeholder.svg' %>" alt="">
+        <div class="grow">
+          <strong><a href="/u/<%= otherUser %>"><%= otherName %></a></strong>
+          <div class="small muted">
+            <% if (active.listing_id) { %><a href="/listings/<%= active.listing_id %>"><%= active.listing_title %></a><% } else { %><%= active.listing_title %> (deleted)<% } %>
+            <% if (active.price_cents != null) { %> · <%= formatMoney(active.price_cents) %><% } %>
+          </div>
+        </div>
+        <% if (order) { %>
+          <a class="btn btn-ghost btn-sm" href="/orders/<%= order.id %>">Order #<%= order.id %> · <%= ORDER_STATUS_LABEL[order.status] %></a>
+        <% } else if (iAmBuyer && active.listing_status === 'active') { %>
+          <a class="btn btn-primary btn-sm" href="/listings/<%= active.listing_id %>/buy">Buy now</a>
+        <% } %>
+      </header>
+      <div class="chat-log" id="chat-log" data-conversation="<%= active.id %>" data-me="<%= currentUser.id %>">
+        <% messages.forEach(function (m) { %>
+          <div class="msg <%= m.is_system ? 'msg-system' : (m.sender_id === currentUser.id ? 'msg-mine' : 'msg-theirs') %>" data-id="<%= m.id %>">
+            <div class="msg-body"><%= m.body %></div>
+            <div class="msg-time" title="<%= formatDate(m.created_at) %>"><%= formatDate(m.created_at) %></div>
+          </div>
+        <% }) %>
+      </div>
+      <% if (closed) { %>
+        <div class="chat-closed muted">This conversation is closed because one of the accounts was suspended.</div>
+      <% } else { %>
+        <form class="chat-form" id="chat-form" method="post" action="/api/conversations/<%= active.id %>/messages">
+          <textarea name="body" rows="1" maxlength="2000" placeholder="Write a message…" required aria-label="Message"></textarea>
+          <button class="btn btn-primary" type="submit">Send</button>
+        </form>
+        <p class="small muted chat-tip">Tip: keep payments inside Yard — off-site payments aren't protected by escrow.</p>
+      <% } %>
+    <% } %>
+  </section>
+</div>
+<% if (active) { %><script src="/static/js/chat.js" defer></script><% } %>
+<%- include('../partials/footer') %>

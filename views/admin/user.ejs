@@ -1,0 +1,99 @@
+<%- include('../partials/header') %>
+<h1><%= user.display_name %> <span class="muted">@<%= user.username %></span></h1>
+<%- include('../partials/admin-nav') %>
+<div class="two-col">
+  <section class="panel">
+    <h2>Account</h2>
+    <dl class="summary">
+      <dt>Email</dt><dd><%= user.email %></dd>
+      <dt>Role</dt><dd><%= user.role %></dd>
+      <dt>Status</dt><dd><%= user.banned ? 'Banned — ' + user.ban_reason : 'Active' %></dd>
+      <dt>Joined</dt><dd><%= formatDate(user.created_at) %></dd>
+      <dt>Last seen</dt><dd><%= user.last_seen_at ? formatDate(user.last_seen_at) : 'never' %></dd>
+      <dt>Wallet balance</dt><dd><%= formatMoney(user.balance_cents) %></dd>
+    </dl>
+    <p><a href="/u/<%= user.username %>">View public profile →</a></p>
+  </section>
+  <section class="panel stack">
+    <h2>Actions</h2>
+    <% if (user.id === currentUser.id) { %>
+      <p class="muted">This is your own account.</p>
+    <% } else if (user.banned) { %>
+      <form method="post" action="/admin/users/<%= user.id %>/unban"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-primary">Unban user</button></form>
+    <% } else if (user.role !== 'admin') { %>
+      <form method="post" action="/admin/users/<%= user.id %>/ban" class="stack-sm" data-confirm="Ban @<%= user.username %>? They will be signed out, their listings hidden and all their open orders refunded.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input name="reason" required maxlength="300" placeholder="Reason for the ban (shown to the user)">
+        <button class="btn btn-danger">Ban user</button>
+      </form>
+    <% } %>
+    <% if (user.id !== currentUser.id && !user.banned) { %>
+      <form method="post" action="/admin/users/<%= user.id %>/role" data-confirm="<%= user.role === 'admin' ? 'Remove admin rights?' : 'Give this user full administrator rights?' %>">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input type="hidden" name="role" value="<%= user.role === 'admin' ? 'user' : 'admin' %>">
+        <button class="btn btn-ghost"><%= user.role === 'admin' ? 'Remove admin rights' : 'Make administrator' %></button>
+      </form>
+    <% } %>
+    <details>
+      <summary>Adjust wallet balance</summary>
+      <form method="post" action="/admin/users/<%= user.id %>/adjust" class="stack-sm" data-confirm="Apply this balance adjustment?">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="row gap-sm">
+          <select name="direction"><option value="credit">Credit (+)</option><option value="debit">Debit (−)</option></select>
+          <input name="amount" inputmode="decimal" placeholder="0.00" required>
+        </div>
+        <input name="note" required maxlength="200" placeholder="Reason (required, logged)">
+        <button class="btn btn-ghost btn-sm">Apply</button>
+      </form>
+    </details>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Listings (<%= listings.length %>)</h2>
+  <% if (!listings.length) { %><p class="muted">No listings.</p><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th></th><th>Title</th><th>Status</th><th class="num">Price</th><th>Created</th><th></th></tr></thead>
+    <tbody>
+    <% listings.forEach(function (l) { %>
+      <tr>
+        <td><img class="thumb-sm" src="<%= l.cover ? '/uploads/' + l.cover : '/static/img/placeholder.svg' %>" alt=""></td>
+        <td><a href="/listings/<%= l.id %>"><%= l.title %></a><% if (l.removed_reason) { %><br><span class="small danger"><%= l.removed_reason %></span><% } %></td>
+        <td><span class="status status-l-<%= l.status %>"><%= l.status %></span></td>
+        <td class="num"><%= formatMoney(l.price_cents) %></td>
+        <td class="small nowrap"><%= formatDate(l.created_at) %></td>
+        <td class="nowrap">
+          <form method="post" action="/admin/listings/<%= l.id %>/delete" data-confirm="Permanently delete this listing?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="back" value="user"><button class="btn btn-danger-ghost btn-sm">Delete</button></form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table></div>
+  <% } %>
+</section>
+
+<section class="panel">
+  <h2>Orders</h2>
+  <% if (!orders.length) { %><p class="muted">No orders.</p><% } else { %>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>#</th><th>Item</th><th>Buyer</th><th>Seller</th><th>Status</th><th class="num">Amount</th></tr></thead>
+    <tbody><% orders.forEach(function (o) { %>
+      <tr><td><a href="/orders/<%= o.id %>"><%= o.id %></a></td><td><%= o.listing_title %></td><td>@<%= o.buyer_username %></td><td>@<%= o.seller_username %></td><td><span class="status status-<%= o.status %>"><%= ORDER_STATUS_LABEL[o.status] %></span></td><td class="num"><%= formatMoney(o.amount_cents) %></td></tr>
+    <% }) %></tbody>
+  </table></div>
+  <% } %>
+</section>
+
+<div class="two-col">
+  <section class="panel">
+    <h2>Wallet activity</h2>
+    <% if (!txs.length) { %><p class="muted">None.</p><% } %>
+    <ul class="plain-list small"><% txs.forEach(function (t) { %><li><span class="<%= t.amount_cents < 0 ? 'neg' : 'pos' %>"><%= t.amount_cents < 0 ? '−' : '+' %><%= formatMoney(Math.abs(t.amount_cents)) %></span> <%= t.type %> — <%= t.note %> <span class="muted"><%= timeAgo(t.created_at) %></span></li><% }) %></ul>
+  </section>
+  <section class="panel">
+    <h2>Moderation history</h2>
+    <% if (!log.length) { %><p class="muted">None.</p><% } %>
+    <ul class="plain-list small"><% log.forEach(function (a) { %><li><strong>@<%= a.admin %></strong> <%= a.action.replace(/_/g, ' ') %> <span class="muted"><%= formatDate(a.created_at) %></span><% if (a.note) { %> — <%= a.note %><% } %></li><% }) %></ul>
+  </section>
+</div>
+<%- include('../partials/footer') %>

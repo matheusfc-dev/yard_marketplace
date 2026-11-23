@@ -1,0 +1,17 @@
+<%- include('partials/header') %>
+<section class="profile-head panel">
+  <span class="avatar avatar-lg"><%= profile.display_name.charAt(0).toUpperCase() %></span>
+  <div class="grow">
+    <h1><%= profile.display_name %> <% if (profile.role === 'admin') { %><span class="tag tag-admin">Admin</span><% } %><% if (profile.banned) { %><span class="tag tag-banned">Suspended</span><% } %></h1>
+    <p class="muted">@<%= profile.username %><% if (profile.location) { %> · 📍 <%= profile.location %><% } %> · member since <%= formatDate(profile.created_at).split(',').slice(0, 2).join(',') %><% if (profile.last_seen_at) { %> · active <%= timeAgo(profile.last_seen_at) %><% } %></p>
+    <% if (profile.bio) { %><p class="description"><%= profile.bio %></p><% } %>
+    <p class="small"><strong><%= stats.sales %></strong> sales · <strong><%= stats.purchases %></strong> purchases</p>
+  </div>
+  <% if (currentUser && currentUser.id === profile.id) { %><a class="btn btn-ghost" href="/settings">Edit profile</a><% } %>
+  <% if (currentUser && currentUser.role === 'admin') { %><a class="btn btn-ghost" href="/admin/users/<%= profile.id %>">Manage user</a><% } %>
+</section>
+<h2>Listings</h2>
+<% if (!listings.length) { %><p class="muted">No listings yet.</p><% } else { %>
+  <div class="grid"><% listings.forEach(function (l) { %><%- include('partials/listing-card', { l: l }) %><% }) %></div>
+<% } %>
+<%- include('partials/footer') %>

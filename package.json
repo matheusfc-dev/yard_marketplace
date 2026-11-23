@@ -1,0 +1,25 @@
+{
+  "name": "yard-marketplace",
+  "version": "1.0.0",
+  "description": "Yard Marketplace - buy and sell with built-in messaging, escrow wallet payments and admin moderation",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "ejs": "^7.0.2",
+    "express": "^5.3.0",
+    "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
+    "multer": "^2.5.0"
+  }
+}

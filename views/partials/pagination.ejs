@@ -1,0 +1,8 @@
+<% if (pages > 1) { %>
+  <nav class="pagination" aria-label="Pages">
+    <% const mk = function (p) { const u = new URLSearchParams(); Object.entries(filters).forEach(function (kv) { if (kv[1]) u.set(kv[0], kv[1]); }); u.set('page', p); return '/?' + u.toString(); }; %>
+    <% if (page > 1) { %><a class="btn btn-ghost" href="<%= mk(page - 1) %>">← Prev</a><% } %>
+    <span class="muted">Page <%= page %> of <%= pages %></span>
+    <% if (page < pages) { %><a class="btn btn-ghost" href="<%= mk(page + 1) %>">Next →</a><% } %>
+  </nav>
+<% } %>

@@ -1,0 +1,8 @@
+<%- include('partials/header') %>
+<section class="panel narrow center">
+  <div class="error-code"><%= status %></div>
+  <h1><%= status === 404 ? 'Page not found' : status === 403 ? 'Not allowed' : 'Something went wrong' %></h1>
+  <p class="muted"><%= message %></p>
+  <a class="btn btn-primary" href="/">Back to the marketplace</a>
+</section>
+<%- include('partials/footer') %>

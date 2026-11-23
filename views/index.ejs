@@ -1,0 +1,73 @@
+<%- include('partials/header') %>
+<% if (!filters.q && !filters.category && !currentUser) { %>
+<section class="hero">
+  <div>
+    <h1>Turn your yard into cash.</h1>
+    <p>Post what you don't need, chat with buyers, and get paid safely — every payment is held in escrow until the buyer confirms they got the item.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary btn-lg" href="/register">Start selling</a>
+      <a class="btn btn-ghost btn-lg" href="/about">How it works</a>
+    </div>
+  </div>
+  <ul class="hero-points">
+    <li><strong>💬 Built-in chat</strong><span>Ask questions and agree details without sharing your number.</span></li>
+    <li><strong>🔒 Escrow payments</strong><span>Money is released only when the buyer confirms receipt.</span></li>
+    <li><strong>🛡️ Moderated</strong><span>Report anything shady — our admins review every report.</span></li>
+  </ul>
+</section>
+<% } %>
+
+<div class="browse">
+  <aside class="filters">
+    <form method="get" action="/" class="stack">
+      <% if (filters.q) { %><input type="hidden" name="q" value="<%= filters.q %>"><% } %>
+      <h3>Categories</h3>
+      <ul class="catlist">
+        <li><a href="/?<%= new URLSearchParams(filters.q ? { q: filters.q } : {}).toString() %>" class="<%= !filters.category ? 'active' : '' %>">All categories</a></li>
+        <% CATEGORIES.forEach(function (c) { %>
+          <li><a class="<%= filters.category === c ? 'active' : '' %>" href="/?<%= new URLSearchParams(Object.assign({}, filters.q ? { q: filters.q } : {}, { category: c })).toString() %>"><%= c %> <span class="muted"><%= categoryCounts[c] || 0 %></span></a></li>
+        <% }) %>
+      </ul>
+      <% if (filters.category) { %><input type="hidden" name="category" value="<%= filters.category %>"><% } %>
+      <h3>Price</h3>
+      <div class="row gap-sm">
+        <input type="text" inputmode="decimal" name="min" placeholder="Min $" value="<%= filters.min %>" aria-label="Minimum price">
+        <input type="text" inputmode="decimal" name="max" placeholder="Max $" value="<%= filters.max %>" aria-label="Maximum price">
+      </div>
+      <h3>Condition</h3>
+      <select name="condition" aria-label="Condition">
+        <option value="">Any condition</option>
+        <% CONDITIONS.forEach(function (c) { %><option <%= filters.condition === c ? 'selected' : '' %>><%= c %></option><% }) %>
+      </select>
+      <h3>Sort by</h3>
+      <select name="sort" aria-label="Sort">
+        <option value="newest" <%= filters.sort === 'newest' ? 'selected' : '' %>>Newest first</option>
+        <option value="price_asc" <%= filters.sort === 'price_asc' ? 'selected' : '' %>>Price: low to high</option>
+        <option value="price_desc" <%= filters.sort === 'price_desc' ? 'selected' : '' %>>Price: high to low</option>
+        <option value="popular" <%= filters.sort === 'popular' ? 'selected' : '' %>>Most viewed</option>
+        <option value="oldest" <%= filters.sort === 'oldest' ? 'selected' : '' %>>Oldest first</option>
+      </select>
+      <button class="btn btn-primary" type="submit">Apply filters</button>
+      <a class="btn btn-ghost" href="/">Reset</a>
+    </form>
+  </aside>
+
+  <section class="results">
+    <div class="results-head">
+      <h2><%= filters.q ? 'Results for “' + filters.q + '”' : (filters.category || 'Fresh finds') %></h2>
+      <span class="muted"><%= total %> item<%= total === 1 ? '' : 's' %></span>
+    </div>
+    <% if (!listings.length) { %>
+      <div class="empty">
+        <p>No items match your search yet.</p>
+        <% if (currentUser) { %><a class="btn btn-primary" href="/listings/new">Be the first to sell one</a><% } %>
+      </div>
+    <% } else { %>
+      <div class="grid">
+        <% listings.forEach(function (l) { %><%- include('partials/listing-card', { l: l }) %><% }) %>
+      </div>
+      <%- include('partials/pagination') %>
+    <% } %>
+  </section>
+</div>
+<%- include('partials/footer') %>

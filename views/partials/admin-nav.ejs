@@ -1,0 +1,8 @@
+<nav class="tabs admin-tabs">
+  <a href="/admin" class="<%= path === '/admin' || path === '/admin/' ? 'active' : '' %>">Overview</a>
+  <a href="/admin/reports" class="<%= path.startsWith('/admin/reports') ? 'active' : '' %>">Reports<% if (openReports) { %> <span class="badge"><%= openReports %></span><% } %></a>
+  <a href="/admin/listings" class="<%= path.startsWith('/admin/listings') ? 'active' : '' %>">Listings</a>
+  <a href="/admin/users" class="<%= path.startsWith('/admin/users') ? 'active' : '' %>">Users</a>
+  <a href="/admin/orders" class="<%= path.startsWith('/admin/orders') ? 'active' : '' %>">Orders</a>
+  <a href="/admin/log" class="<%= path.startsWith('/admin/log') ? 'active' : '' %>">Moderation log</a>
+</nav>

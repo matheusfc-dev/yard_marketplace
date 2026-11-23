@@ -1,0 +1,54 @@
+<%- include('partials/header') %>
+<h1>Wallet</h1>
+<div class="stats">
+  <div class="stat stat-hero"><span class="muted">Available balance</span><span class="stat-num"><%= formatMoney(currentUser.balance_cents) %></span></div>
+  <div class="stat"><span class="muted">Held in escrow (your purchases)</span><span class="stat-num"><%= formatMoney(escrow) %></span></div>
+  <div class="stat"><span class="muted">Incoming (your sales in progress)</span><span class="stat-num"><%= formatMoney(incoming) %></span></div>
+</div>
+<% if (need) { %>
+  <div class="alert alert-info">Add at least <strong><%= formatMoney(Math.max(0, need.price_cents - currentUser.balance_cents)) %></strong> to buy “<%= need.title %>”. You'll go straight back to checkout.</div>
+<% } %>
+<div class="two-col">
+  <section class="panel">
+    <h2>Add funds</h2>
+    <form method="post" action="/wallet/deposit" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (need) { %><input type="hidden" name="need" value="<%= need.id %>"><% } %>
+      <label>Amount (USD)<input name="amount" inputmode="decimal" required value="<%= need ? (Math.max(100, need.price_cents - currentUser.balance_cents) / 100).toFixed(2) : '' %>" placeholder="50.00"></label>
+      <div class="row gap-sm wrap quick-amounts">
+        <% [20, 50, 100, 250].forEach(function (a) { %><button type="button" class="chip chip-btn" data-fill="<%= a %>">$<%= a %></button><% }) %>
+      </div>
+      <button class="btn btn-primary" type="submit">Add funds</button>
+      <p class="small muted">Demo mode: no real card is charged. Connect a payment provider for production — see README.</p>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Withdraw</h2>
+    <form method="post" action="/wallet/withdraw" class="stack" data-confirm="Withdraw these funds to your bank account?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Amount (USD)<input name="amount" inputmode="decimal" required placeholder="0.00"></label>
+      <button class="btn btn-ghost" type="submit">Withdraw to bank</button>
+      <p class="small muted">Sales are added to your balance when the buyer confirms receipt.</p>
+    </form>
+  </section>
+</div>
+<section class="panel">
+  <h2>Transaction history</h2>
+  <% if (!txs.length) { %><p class="muted">No transactions yet.</p><% } else { %>
+    <div class="table-wrap"><table class="table">
+      <thead><tr><th>Date</th><th>Type</th><th>Details</th><th class="num">Amount</th><th class="num">Balance</th></tr></thead>
+      <tbody>
+        <% txs.forEach(function (t) { %>
+          <tr>
+            <td class="nowrap"><%= formatDate(t.created_at) %></td>
+            <td><span class="tag tag-tx-<%= t.type %>"><%= t.type %></span></td>
+            <td><%= t.note %><% if (t.order_id) { %> · <a href="/orders/<%= t.order_id %>">order #<%= t.order_id %></a><% } %></td>
+            <td class="num <%= t.amount_cents < 0 ? 'neg' : 'pos' %>"><%= t.amount_cents < 0 ? '−' : '+' %><%= formatMoney(Math.abs(t.amount_cents)) %></td>
+            <td class="num"><%= formatMoney(t.balance_after) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table></div>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

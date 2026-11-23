@@ -1,0 +1,59 @@
+<%- include('../partials/header') %>
+<% const iAmBuyer = order.buyer_id === currentUser.id, iAmSeller = order.seller_id === currentUser.id, isAdmin = currentUser.role === 'admin';
+   const steps = ['paid', 'shipped', 'completed']; const idx = steps.indexOf(order.status); %>
+<section class="panel narrow">
+  <div class="row between wrap">
+    <h1>Order #<%= order.id %></h1>
+    <span class="status status-<%= order.status %>"><%= ORDER_STATUS_LABEL[order.status] %></span>
+  </div>
+  <div class="order-item">
+    <img src="<%= cover ? '/uploads/' + cover : '/static/img/placeholder.svg' %>" alt="">
+    <div>
+      <% if (order.listing_id) { %><a href="/listings/<%= order.listing_id %>"><strong><%= order.listing_title %></strong></a><% } else { %><strong><%= order.listing_title %></strong><% } %>
+      <div class="muted small">Buyer: <a href="/u/<%= order.buyer_username %>"><%= order.buyer_name %></a> · Seller: <a href="/u/<%= order.seller_username %>"><%= order.seller_name %></a></div>
+      <div class="muted small">Placed <%= formatDate(order.created_at) %> · updated <%= timeAgo(order.updated_at) %></div>
+    </div>
+    <div class="price"><%= formatMoney(order.amount_cents) %></div>
+  </div>
+
+  <% if (order.status !== 'cancelled') { %>
+    <ol class="progress">
+      <li class="<%= idx >= 0 ? 'done' : '' %>"><strong>Paid</strong><span>Money held in escrow</span></li>
+      <li class="<%= idx >= 1 ? 'done' : '' %>"><strong>Shipped</strong><span>Seller handed it over</span></li>
+      <li class="<%= idx >= 2 ? 'done' : '' %>"><strong>Completed</strong><span>Payment released to seller</span></li>
+    </ol>
+  <% } else { %>
+    <div class="alert alert-info"><%= order.cancel_reason %>. <%= formatMoney(order.amount_cents) %> was refunded to the buyer's wallet.</div>
+  <% } %>
+
+  <% if (order.shipping_note) { %>
+    <h3>Delivery / pickup details from the buyer</h3>
+    <div class="description"><%= order.shipping_note %></div>
+  <% } %>
+
+  <div class="row gap-sm wrap order-actions">
+    <% if (iAmSeller && order.status === 'paid') { %>
+      <form method="post" action="/orders/<%= order.id %>/ship"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-primary">Mark as shipped / handed over</button></form>
+    <% } %>
+    <% if (iAmBuyer && ['paid','shipped'].includes(order.status)) { %>
+      <form method="post" action="/orders/<%= order.id %>/confirm" data-confirm="Confirm you received the item? This releases the payment to the seller and can't be undone."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-primary">I received the item — release payment</button></form>
+    <% } %>
+    <% if (conversation) { %><a class="btn btn-ghost" href="/messages/<%= conversation.id %>">Open chat</a><% } %>
+  </div>
+
+  <% const canCancel = ['paid','shipped'].includes(order.status) && (iAmSeller || isAdmin || (iAmBuyer && order.status === 'paid')); %>
+  <% if (canCancel) { %>
+    <details class="report">
+      <summary class="small muted"><%= isAdmin && !iAmBuyer && !iAmSeller ? 'Admin: cancel and refund this order' : 'Cancel this order' %></summary>
+      <form method="post" action="/orders/<%= order.id %>/cancel" class="stack-sm" data-confirm="Cancel the order and refund the buyer?">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <input name="reason" maxlength="300" placeholder="Reason (optional)">
+        <button class="btn btn-danger-ghost btn-sm">Cancel order &amp; refund buyer</button>
+      </form>
+    </details>
+  <% } %>
+  <% if (iAmBuyer && order.status === 'shipped') { %>
+    <p class="small muted">Problem with the item? Message the seller first. If you can't resolve it, report the listing and an administrator can refund you.</p>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

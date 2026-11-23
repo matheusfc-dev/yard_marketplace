@@ -1,0 +1,130 @@
+<%- include('../partials/header') %>
+<nav class="crumbs small muted"><a href="/">Home</a> › <a href="/?category=<%= encodeURIComponent(listing.category) %>"><%= listing.category %></a> › <%= listing.title %></nav>
+
+<% if (listing.status === 'removed') { %>
+  <div class="alert alert-error"><strong>Removed by a moderator.</strong> <%= listing.removed_reason %> — this listing is hidden from the marketplace.</div>
+<% } %>
+<% if (listing.seller_banned && isAdmin) { %><div class="alert alert-error">The seller's account is suspended. This listing is hidden from the public.</div><% } %>
+
+<div class="listing">
+  <section class="gallery" data-gallery>
+    <div class="gallery-main">
+      <img src="<%= images[0] ? '/uploads/' + images[0].filename : '/static/img/placeholder.svg' %>" alt="<%= listing.title %>" data-gallery-main>
+      <% if (listing.status === 'reserved') { %><span class="ribbon ribbon-warn">Pending sale</span><% } %>
+      <% if (listing.status === 'sold') { %><span class="ribbon ribbon-dark">Sold</span><% } %>
+    </div>
+    <% if (images.length > 1) { %>
+      <div class="gallery-thumbs">
+        <% images.forEach(function (img, i) { %>
+          <button type="button" class="<%= i === 0 ? 'active' : '' %>" data-src="/uploads/<%= img.filename %>"><img src="/uploads/<%= img.filename %>" alt="Photo <%= i + 1 %>"></button>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="listing-info">
+    <h1><%= listing.title %></h1>
+    <div class="price price-lg"><%= formatMoney(listing.price_cents) %></div>
+    <div class="chips">
+      <span class="chip"><%= listing.condition %></span>
+      <span class="chip"><%= listing.category %></span>
+      <% if (listing.location) { %><span class="chip">📍 <%= listing.location %></span><% } %>
+    </div>
+    <p class="muted small">Listed <%= timeAgo(listing.created_at) %> · <%= listing.views %> view<%= listing.views === 1 ? '' : 's' %></p>
+
+    <div class="actions-box">
+      <% if (isOwner) { %>
+        <% if (myOrder) { %>
+          <div class="alert alert-info">An order for this item is in progress. <a href="/orders/<%= myOrder.id %>">View order #<%= myOrder.id %></a></div>
+        <% } %>
+        <% if (listing.status !== 'removed') { %>
+          <div class="row gap-sm wrap">
+            <a class="btn btn-primary" href="/listings/<%= listing.id %>/edit">Edit listing</a>
+            <% if (listing.status === 'active') { %>
+              <form method="post" action="/listings/<%= listing.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="sold"><button class="btn btn-ghost">Mark as sold</button></form>
+            <% } else if (listing.status === 'sold') { %>
+              <form method="post" action="/listings/<%= listing.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="status" value="active"><button class="btn btn-ghost">Relist</button></form>
+            <% } %>
+            <% if (listing.status !== 'reserved') { %>
+              <form method="post" action="/listings/<%= listing.id %>/delete" data-confirm="Delete this listing permanently?"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-ghost">Delete</button></form>
+            <% } %>
+          </div>
+        <% } %>
+      <% } else if (listing.status === 'active') { %>
+        <% if (currentUser) { %>
+          <a class="btn btn-primary btn-block btn-lg" href="/listings/<%= listing.id %>/buy">Buy now · <%= formatMoney(listing.price_cents) %></a>
+          <% if (conversation) { %>
+            <a class="btn btn-ghost btn-block" href="/messages/<%= conversation.id %>">Open your chat with the seller</a>
+          <% } else { %>
+            <form method="post" action="/listings/<%= listing.id %>/contact" class="stack-sm">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <textarea name="body" rows="2" maxlength="2000" required>Hi! Is this still available?</textarea>
+              <button class="btn btn-ghost btn-block" type="submit">Message seller</button>
+            </form>
+          <% } %>
+          <form method="post" action="/listings/<%= listing.id %>/favorite"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-link"><%= favorited ? '♥ Saved' : '♡ Save for later' %></button></form>
+        <% } else { %>
+          <a class="btn btn-primary btn-block btn-lg" href="/login?next=/listings/<%= listing.id %>">Sign in to buy or message</a>
+        <% } %>
+      <% } else { %>
+        <div class="alert alert-info">
+          <%= listing.status === 'reserved' ? 'This item has a pending sale.' : listing.status === 'sold' ? 'This item has been sold.' : 'This item is unavailable.' %>
+          <% if (myOrder) { %> <a href="/orders/<%= myOrder.id %>">View your order #<%= myOrder.id %></a><% } %>
+        </div>
+        <% if (conversation) { %><a class="btn btn-ghost btn-block" href="/messages/<%= conversation.id %>">Open your chat with the seller</a><% } %>
+      <% } %>
+    </div>
+
+    <div class="seller-box">
+      <a href="/u/<%= listing.username %>" class="seller">
+        <span class="avatar"><%= listing.display_name.charAt(0).toUpperCase() %></span>
+        <span><strong><%= listing.display_name %></strong><br><span class="muted small">@<%= listing.username %> · member since <%= formatDate(listing.seller_since).split(',').slice(0, 2).join(',') %></span></span>
+      </a>
+      <div class="muted small"><%= sellerStats.sales %> completed sale<%= sellerStats.sales === 1 ? '' : 's' %> · <%= sellerStats.active %> active listing<%= sellerStats.active === 1 ? '' : 's' %><% if (listing.seller_last_seen) { %> · active <%= timeAgo(listing.seller_last_seen) %><% } %></div>
+    </div>
+
+    <h2>Description</h2>
+    <div class="description"><%= listing.description %></div>
+
+    <p class="notice small">🔒 Pay through Yard: your money stays in escrow until you confirm you received the item.</p>
+
+    <% if (currentUser && !isOwner) { %>
+      <details class="report">
+        <summary class="small muted">Report this listing</summary>
+        <form method="post" action="/listings/<%= listing.id %>/report" class="stack-sm">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <select name="reason" required>
+            <option>Prohibited or illegal item</option><option>Scam or fraud</option><option>Counterfeit</option>
+            <option>Offensive content</option><option>Wrong category / spam</option><option>Other</option>
+          </select>
+          <textarea name="details" rows="2" maxlength="1000" placeholder="Anything our moderators should know? (optional)"></textarea>
+          <button class="btn btn-danger-ghost btn-sm" type="submit">Send report</button>
+        </form>
+      </details>
+    <% } %>
+
+    <% if (isAdmin && !isOwner) { %>
+      <div class="admin-box">
+        <strong>Admin tools</strong>
+        <% if (listing.status === 'removed') { %>
+          <form method="post" action="/admin/listings/<%= listing.id %>/restore"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Restore listing</button></form>
+        <% } else { %>
+          <form method="post" action="/admin/listings/<%= listing.id %>/remove" class="row gap-sm" data-confirm="Remove this listing? Any open order will be refunded.">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <input name="reason" placeholder="Reason shown to the seller" required maxlength="300">
+            <button class="btn btn-danger btn-sm">Remove</button>
+          </form>
+        <% } %>
+        <a class="small" href="/admin/users/<%= listing.seller_id %>">Manage seller →</a>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<% if (more.length) { %>
+  <h2>More from <%= listing.display_name %></h2>
+  <div class="grid grid-4">
+    <% more.forEach(function (l) { %><%- include('../partials/listing-card', { l: l }) %><% }) %>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

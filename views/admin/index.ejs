@@ -1,0 +1,47 @@
+<%- include('../partials/header') %>
+<h1>Admin</h1>
+<%- include('../partials/admin-nav') %>
+<div class="stats stats-6">
+  <a class="stat" href="/admin/users"><span class="stat-num"><%= stats.users %></span><span class="muted">users · +<%= stats.new_users %> this week</span></a>
+  <a class="stat" href="/admin/users?filter=banned"><span class="stat-num"><%= stats.banned %></span><span class="muted">banned users</span></a>
+  <a class="stat" href="/admin/listings?status=active"><span class="stat-num"><%= stats.active_listings %></span><span class="muted">active listings · +<%= stats.new_listings %> this week</span></a>
+  <a class="stat <%= stats.open_reports ? 'stat-alert' : '' %>" href="/admin/reports"><span class="stat-num"><%= stats.open_reports %></span><span class="muted">open reports</span></a>
+  <a class="stat" href="/admin/orders"><span class="stat-num"><%= stats.orders %></span><span class="muted">orders · <%= stats.open_orders %> open</span></a>
+  <div class="stat"><span class="stat-num"><%= formatMoney(stats.gmv) %></span><span class="muted">completed sales · <%= formatMoney(stats.escrow) %> in escrow</span></div>
+</div>
+<div class="two-col">
+  <section class="panel">
+    <div class="row between"><h2>Latest open reports</h2><a href="/admin/reports">All reports →</a></div>
+    <% if (!reports.length) { %><p class="muted">Nothing to review. 🎉</p><% } %>
+    <ul class="plain-list">
+      <% reports.forEach(function (r) { %>
+        <li><a href="/listings/<%= r.listing_id %>"><%= r.title || '(deleted listing)' %></a> — <strong><%= r.reason %></strong> <span class="muted small">by @<%= r.reporter %>, <%= timeAgo(r.created_at) %></span></li>
+      <% }) %>
+    </ul>
+  </section>
+  <section class="panel">
+    <div class="row between"><h2>Recent moderation</h2><a href="/admin/log">Full log →</a></div>
+    <% if (!log.length) { %><p class="muted">No moderation actions yet.</p><% } %>
+    <ul class="plain-list">
+      <% log.forEach(function (a) { %>
+        <li><strong>@<%= a.admin || 'deleted' %></strong> <%= a.action.replace(/_/g, ' ') %> <%= a.target_type %> #<%= a.target_id %> <span class="muted small"><%= timeAgo(a.created_at) %></span><% if (a.note) { %><br><span class="muted small"><%= a.note %></span><% } %></li>
+      <% }) %>
+    </ul>
+  </section>
+</div>
+<section class="panel">
+  <h2>New listings, last 14 days</h2>
+  <% const maxN = Math.max(1, ...daily.map(function (d) { return d.n; })); %>
+  <% if (!daily.length) { %><p class="muted">No new listings in the last 14 days.</p><% } else { %>
+  <svg class="chart" viewBox="0 0 <%= daily.length * 40 %> 140" role="img" aria-label="New listings per day">
+    <% daily.forEach(function (d, i) { const h = Math.round((d.n / maxN) * 100); %>
+      <g><title><%= d.day %>: <%= d.n %></title>
+        <rect x="<%= i * 40 + 8 %>" y="<%= 110 - h %>" width="24" height="<%= h %>" rx="4" class="bar"></rect>
+        <text x="<%= i * 40 + 20 %>" y="<%= 104 - h %>" text-anchor="middle" class="bar-val"><%= d.n %></text>
+        <text x="<%= i * 40 + 20 %>" y="128" text-anchor="middle" class="bar-label"><%= d.day.slice(5) %></text>
+      </g>
+    <% }) %>
+  </svg>
+  <% } %>
+</section>
+<%- include('../partials/footer') %>

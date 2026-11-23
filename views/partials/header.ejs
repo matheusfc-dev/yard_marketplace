@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title ? title + ' · Yard Marketplace' : 'Yard Marketplace — buy & sell locally' %></title>
+  <meta name="description" content="Yard Marketplace: buy and sell second-hand items with built-in chat and escrow-protected payments.">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <link rel="icon" href="/static/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="/static/js/app.js" defer></script>
+</head>
+<body class="<%= locals.bodyClass || '' %>">
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="/">
+      <img src="/static/img/logo.svg" alt="" width="34" height="34">
+      <span>Yard<span class="brand-light"> Marketplace</span></span>
+    </a>
+    <form class="search" action="/" method="get" role="search">
+      <input type="search" name="q" placeholder="Search for anything…" value="<%= (query && typeof query.q === 'string') ? query.q : '' %>" aria-label="Search listings">
+      <button type="submit" aria-label="Search">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
+      </button>
+    </form>
+    <button class="nav-toggle" type="button" aria-label="Menu" data-toggle="#mainnav">☰</button>
+    <nav class="mainnav" id="mainnav">
+      <% if (currentUser) { %>
+        <a class="btn btn-primary btn-sm" href="/listings/new">+ Sell</a>
+        <a class="navlink <%= path.startsWith('/messages') ? 'active' : '' %>" href="/messages">Messages<span class="badge <%= unreadCount ? '' : 'hidden' %>" id="unread-badge"><%= unreadCount %></span></a>
+        <a class="navlink <%= path.startsWith('/orders') ? 'active' : '' %>" href="/orders">Orders</a>
+        <a class="navlink wallet-link <%= path.startsWith('/wallet') ? 'active' : '' %>" href="/wallet" title="Wallet balance"><%= formatMoney(currentUser.balance_cents) %></a>
+        <% if (currentUser.role === 'admin') { %>
+          <a class="navlink admin-link <%= path.startsWith('/admin') ? 'active' : '' %>" href="/admin">Admin<% if (openReports) { %><span class="badge"><%= openReports %></span><% } %></a>
+        <% } %>
+        <details class="usermenu">
+          <summary><span class="avatar avatar-sm"><%= currentUser.display_name.charAt(0).toUpperCase() %></span></summary>
+          <div class="menu">
+            <div class="menu-head"><strong><%= currentUser.display_name %></strong><small>@<%= currentUser.username %></small></div>
+            <a href="/u/<%= currentUser.username %>">My profile</a>
+            <a href="/dashboard">My listings</a>
+            <a href="/saved">Saved items</a>
+            <a href="/orders">Orders</a>
+            <a href="/wallet">Wallet</a>
+            <a href="/settings">Settings</a>
+            <form action="/logout" method="post">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="linklike">Sign out</button>
+            </form>
+          </div>
+        </details>
+      <% } else { %>
+        <a class="navlink" href="/about">How it works</a>
+        <a class="navlink" href="/login">Sign in</a>
+        <a class="btn btn-primary btn-sm" href="/register">Join Yard</a>
+      <% } %>
+    </nav>
+  </div>
+</header>
+<main class="container main">
+  <% if (flash && flash.length) { %>
+    <div class="flashes">
+      <% flash.forEach(function (f) { %>
+        <div class="flash flash-<%= f.type %>" role="status"><span><%= f.text %></span><button type="button" class="flash-close" aria-label="Dismiss">×</button></div>
+      <% }) %>
+    </div>
+  <% } %>

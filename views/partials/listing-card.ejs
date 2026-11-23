@@ -1,0 +1,22 @@
+<article class="card listing-card">
+  <a href="/listings/<%= l.id %>" class="card-media">
+    <img src="<%= l.cover ? '/uploads/' + l.cover : '/static/img/placeholder.svg' %>" alt="<%= l.title %>" loading="lazy">
+    <% if (l.status === 'reserved') { %><span class="ribbon ribbon-warn">Pending sale</span><% } %>
+    <% if (l.status === 'sold') { %><span class="ribbon ribbon-dark">Sold</span><% } %>
+    <% if (l.status === 'removed') { %><span class="ribbon ribbon-danger">Removed</span><% } %>
+  </a>
+  <% if (currentUser && typeof favIds !== 'undefined' && l.seller_id !== currentUser.id) { %>
+    <form action="/listings/<%= l.id %>/favorite" method="post" class="fav-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button type="submit" class="fav-btn <%= favIds.has(l.id) ? 'on' : '' %>" aria-label="Save item" title="Save">♥</button>
+    </form>
+  <% } %>
+  <div class="card-body">
+    <div class="price"><%= formatMoney(l.price_cents) %></div>
+    <a href="/listings/<%= l.id %>" class="card-title"><%= l.title %></a>
+    <div class="card-meta muted small">
+      <% if (l.location) { %><span>📍 <%= l.location %></span><% } %>
+      <span><%= timeAgo(l.created_at) %></span>
+    </div>
+  </div>
+</article>

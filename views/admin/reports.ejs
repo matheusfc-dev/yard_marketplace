@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<h1>Reports</h1>
+<%- include('../partials/admin-nav') %>
+<nav class="tabs tabs-sm">
+  <a href="/admin/reports" class="<%= status === 'open' ? 'active' : '' %>">Open</a>
+  <a href="/admin/reports?status=resolved" class="<%= status === 'resolved' ? 'active' : '' %>">Resolved</a>
+  <a href="/admin/reports?status=dismissed" class="<%= status === 'dismissed' ? 'active' : '' %>">Dismissed</a>
+</nav>
+<% if (!reports.length) { %><div class="empty"><p>No <%= status %> reports.</p></div><% } %>
+<div class="list">
+  <% reports.forEach(function (r) { %>
+    <div class="report-card panel">
+      <img src="<%= r.cover ? '/uploads/' + r.cover : '/static/img/placeholder.svg' %>" alt="">
+      <div class="grow">
+        <div><strong><%= r.reason %></strong> <span class="muted small">reported by @<%= r.reporter %> · <%= timeAgo(r.created_at) %></span></div>
+        <div><% if (r.listing_id) { %><a href="/listings/<%= r.listing_id %>"><%= r.title %></a> by <a href="/admin/users/<%= r.seller_id %>">@<%= r.seller %></a> <span class="status status-l-<%= r.listing_status %>"><%= r.listing_status %></span><% } else { %>(listing deleted)<% } %></div>
+        <% if (r.details) { %><p class="description small"><%= r.details %></p><% } %>
+        <% if (r.resolver) { %><p class="small muted">Handled by @<%= r.resolver %></p><% } %>
+      </div>
+      <% if (r.status === 'open') { %>
+        <div class="stack-sm report-actions">
+          <% if (r.listing_id && r.listing_status !== 'removed') { %>
+            <form method="post" action="/admin/listings/<%= r.listing_id %>/remove" class="stack-sm" data-confirm="Remove this listing?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input name="reason" required maxlength="300" value="<%= r.reason %>" class="input-sm">
+              <button class="btn btn-danger btn-sm">Remove listing</button>
+            </form>
+          <% } %>
+          <% if (r.seller_id && !r.seller_banned) { %>
+            <form method="post" action="/admin/users/<%= r.seller_id %>/ban" data-confirm="Ban @<%= r.seller %>? Their open orders will be refunded.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="reason" value="<%= r.reason %>">
+              <button class="btn btn-danger-ghost btn-sm">Ban seller</button>
+            </form>
+          <% } %>
+          <form method="post" action="/admin/reports/<%= r.id %>/dismiss"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Dismiss</button></form>
+        </div>
+      <% } %>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/footer') %>

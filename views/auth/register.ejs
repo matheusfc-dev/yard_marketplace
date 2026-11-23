@@ -1,0 +1,18 @@
+<%- include('../partials/header') %>
+<section class="panel auth">
+  <h1>Join Yard Marketplace</h1>
+  <p class="muted">It's free. Buy, sell and chat in one place.</p>
+  <% if (errors.length) { %><div class="alert alert-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+  <form method="post" action="/register" class="stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocomplete="username" value="<%= form.username || '' %>"><small class="muted">Letters, numbers and underscores. Shown on your profile.</small></label>
+    <label>Display name<input name="display_name" maxlength="60" autocomplete="name" value="<%= form.display_name || '' %>" placeholder="e.g. Sam Rivera"></label>
+    <label>Email<input type="email" name="email" required autocomplete="email" value="<%= form.email || '' %>"></label>
+    <label>Password<input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+    <label>Confirm password<input type="password" name="password_confirm" required minlength="8" autocomplete="new-password"></label>
+    <button class="btn btn-primary btn-block" type="submit">Create account</button>
+  </form>
+  <p class="center muted small">By joining you agree to the <a href="/about#rules">marketplace rules</a>.</p>
+  <p class="center muted">Already have an account? <a href="/login">Sign in</a></p>
+</section>
+<%- include('../partials/footer') %>

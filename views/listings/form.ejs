@@ -1,0 +1,48 @@
+<%- include('../partials/header') %>
+<section class="panel form-panel">
+  <h1><%= isNew ? 'Sell an item' : 'Edit listing' %></h1>
+  <% if (errors.length) { %><div class="alert alert-error"><ul><% errors.forEach(function (e) { %><li><%= e %></li><% }) %></ul></div><% } %>
+  <% if (listing.status === 'removed') { %><div class="alert alert-error">This listing was removed by a moderator: <%= listing.removed_reason %></div><% } %>
+  <form method="post" enctype="multipart/form-data" action="<%= isNew ? '/listings' : '/listings/' + listing.id + '/edit' %>" class="stack">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Title<input name="title" required minlength="3" maxlength="120" value="<%= listing.title || '' %>" placeholder="e.g. Mid-century oak dresser"></label>
+    <div class="row gap">
+      <label class="grow">Price (USD)<input name="price" required inputmode="decimal" pattern="\$?[0-9,]+(\.[0-9]{1,2})?" value="<%= listing.price || '' %>" placeholder="0.00"></label>
+      <label class="grow">Category
+        <select name="category" required>
+          <option value="">Choose…</option>
+          <% CATEGORIES.forEach(function (c) { %><option <%= listing.category === c ? 'selected' : '' %>><%= c %></option><% }) %>
+        </select>
+      </label>
+      <label class="grow">Condition
+        <select name="condition" required>
+          <option value="">Choose…</option>
+          <% CONDITIONS.forEach(function (c) { %><option <%= listing.condition === c ? 'selected' : '' %>><%= c %></option><% }) %>
+        </select>
+      </label>
+    </div>
+    <label>Location<input name="location" maxlength="100" value="<%= listing.location || '' %>" placeholder="City or neighborhood"></label>
+    <label>Description<textarea name="description" required minlength="10" maxlength="5000" rows="7" placeholder="Size, age, any flaws, pickup or shipping options…"><%= listing.description || '' %></textarea></label>
+
+    <% if (images.length) { %>
+      <fieldset>
+        <legend>Current photos <small class="muted">(tick to remove)</small></legend>
+        <div class="thumbs">
+          <% images.forEach(function (img) { %>
+            <label class="thumb"><img src="/uploads/<%= img.filename %>" alt=""><span><input type="checkbox" name="remove_images" value="<%= img.id %>"> Remove</span></label>
+          <% }) %>
+        </div>
+      </fieldset>
+    <% } %>
+    <label class="dropzone">
+      <span><strong><%= isNew ? 'Add photos' : 'Add more photos' %></strong> — up to 8 images, JPG/PNG/WEBP/GIF, 5 MB each. The first photo is the cover.</span>
+      <input type="file" name="images" accept="image/jpeg,image/png,image/webp,image/gif" multiple <%= isNew ? 'required' : '' %> data-preview="#preview">
+    </label>
+    <div class="thumbs" id="preview"></div>
+    <div class="row gap">
+      <button class="btn btn-primary" type="submit"><%= isNew ? 'Publish listing' : 'Save changes' %></button>
+      <a class="btn btn-ghost" href="<%= isNew ? '/' : '/listings/' + listing.id %>">Cancel</a>
+    </div>
+  </form>
+</section>
+<%- include('../partials/footer') %>

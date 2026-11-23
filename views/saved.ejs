@@ -1,0 +1,8 @@
+<%- include('partials/header') %>
+<h1>Saved items</h1>
+<% if (!listings.length) { %>
+  <div class="empty"><p>Tap ♥ on any item to save it here.</p><a class="btn btn-primary" href="/">Browse items</a></div>
+<% } else { %>
+  <div class="grid"><% listings.forEach(function (l) { %><%- include('partials/listing-card', { l: l }) %><% }) %></div>
+<% } %>
+<%- include('partials/footer') %>

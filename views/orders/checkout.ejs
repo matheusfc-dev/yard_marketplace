@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+<section class="panel narrow">
+  <h1>Checkout</h1>
+  <div class="order-item">
+    <img src="<%= listing.cover ? '/uploads/' + listing.cover : '/static/img/placeholder.svg' %>" alt="">
+    <div>
+      <a href="/listings/<%= listing.id %>"><strong><%= listing.title %></strong></a>
+      <div class="muted small">Sold by <a href="/u/<%= listing.username %>"><%= listing.display_name %></a> · <%= listing.condition %></div>
+    </div>
+    <div class="price"><%= formatMoney(listing.price_cents) %></div>
+  </div>
+  <dl class="summary">
+    <dt>Item price</dt><dd><%= formatMoney(listing.price_cents) %></dd>
+    <dt>Yard fee</dt><dd>Free</dd>
+    <dt class="total">Total</dt><dd class="total"><%= formatMoney(listing.price_cents) %></dd>
+    <dt>Your wallet balance</dt><dd><%= formatMoney(currentUser.balance_cents) %></dd>
+  </dl>
+  <% if (currentUser.balance_cents < listing.price_cents) { %>
+    <div class="alert alert-info">You need <strong><%= formatMoney(listing.price_cents - currentUser.balance_cents) %></strong> more in your wallet.</div>
+    <a class="btn btn-primary btn-block" href="/wallet?need=<%= listing.id %>">Add funds to wallet</a>
+  <% } else { %>
+    <form method="post" action="/listings/<%= listing.id %>/buy" class="stack" data-confirm="Pay <%= formatMoney(listing.price_cents) %> from your wallet?">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Delivery or pickup details for the seller <small class="muted">(optional)</small>
+        <textarea name="shipping_note" rows="3" maxlength="1000" placeholder="Shipping address, or when you can pick it up"></textarea>
+      </label>
+      <button class="btn btn-primary btn-block btn-lg" type="submit">Pay <%= formatMoney(listing.price_cents) %></button>
+    </form>
+  <% } %>
+  <p class="notice small">🔒 Your payment is held in escrow. The seller gets paid only after you confirm you received the item. If the seller cancels, or you cancel before it ships, you're refunded in full.</p>
+</section>
+<%- include('../partials/footer') %>

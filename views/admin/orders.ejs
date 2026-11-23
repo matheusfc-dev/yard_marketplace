@@ -1,0 +1,33 @@
+<%- include('../partials/header') %>
+<h1>Orders</h1>
+<%- include('../partials/admin-nav') %>
+<nav class="tabs tabs-sm">
+  <a href="/admin/orders" class="<%= !status ? 'active' : '' %>">All</a>
+  <% ['paid','shipped','completed','cancelled'].forEach(function (s) { %><a href="/admin/orders?status=<%= s %>" class="<%= status === s ? 'active' : '' %>"><%= ORDER_STATUS_LABEL[s] %></a><% }) %>
+</nav>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th>#</th><th>Item</th><th>Buyer</th><th>Seller</th><th>Status</th><th class="num">Amount</th><th>Updated</th><th></th></tr></thead>
+  <tbody>
+  <% orders.forEach(function (o) { %>
+    <tr>
+      <td><a href="/orders/<%= o.id %>"><%= o.id %></a></td>
+      <td><%= o.listing_title %></td>
+      <td><a href="/admin/users/<%= o.buyer_id %>">@<%= o.buyer_username %></a></td>
+      <td><a href="/admin/users/<%= o.seller_id %>">@<%= o.seller_username %></a></td>
+      <td><span class="status status-<%= o.status %>"><%= ORDER_STATUS_LABEL[o.status] %></span></td>
+      <td class="num"><%= formatMoney(o.amount_cents) %></td>
+      <td class="small nowrap"><%= timeAgo(o.updated_at) %></td>
+      <td>
+        <% if (['paid','shipped'].includes(o.status)) { %>
+          <form method="post" action="/orders/<%= o.id %>/cancel" data-confirm="Cancel order #<%= o.id %> and refund the buyer?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>"><input type="hidden" name="back" value="admin"><input type="hidden" name="reason" value="refunded by administrator">
+            <button class="btn btn-danger-ghost btn-sm">Refund</button>
+          </form>
+        <% } %>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<% if (!orders.length) { %><p class="muted">No orders.</p><% } %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+<div class="row between wrap">
+  <h1>My listings</h1>
+  <a class="btn btn-primary" href="/listings/new">+ Sell an item</a>
+</div>
+<div class="stats">
+  <div class="stat"><span class="stat-num"><%= stats.sold %></span><span class="muted">items sold</span></div>
+  <div class="stat"><span class="stat-num"><%= formatMoney(stats.earned) %></span><span class="muted">earned</span></div>
+  <div class="stat"><span class="stat-num"><%= formatMoney(stats.pending) %></span><span class="muted">in escrow (incoming)</span></div>
+  <div class="stat"><span class="stat-num"><%= listings.filter(function (l) { return l.status === 'active'; }).length %></span><span class="muted">active listings</span></div>
+</div>
+<% if (!listings.length) { %>
+  <div class="empty"><p>You haven't posted anything yet.</p><a class="btn btn-primary" href="/listings/new">Post your first item</a></div>
+<% } else { %>
+  <div class="list">
+    <% listings.forEach(function (l) { %>
+      <div class="list-row">
+        <img src="<%= l.cover ? '/uploads/' + l.cover : '/static/img/placeholder.svg' %>" alt="">
+        <span class="grow">
+          <a href="/listings/<%= l.id %>"><strong><%= l.title %></strong></a>
+          <span class="muted small block"><%= l.views %> views · <%= l.saves %> saves · <%= l.chats %> chats · listed <%= timeAgo(l.created_at) %></span>
+          <% if (l.status === 'removed') { %><span class="small danger block">Removed by a moderator: <%= l.removed_reason %></span><% } %>
+        </span>
+        <span class="status status-l-<%= l.status %>"><%= { active: 'Active', reserved: 'Pending sale', sold: 'Sold', removed: 'Removed' }[l.status] %></span>
+        <span class="price"><%= formatMoney(l.price_cents) %></span>
+        <% if (l.status !== 'removed') { %><a class="btn btn-ghost btn-sm" href="/listings/<%= l.id %>/edit">Edit</a><% } %>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+<%- include('partials/footer') %>

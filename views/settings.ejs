@@ -1,0 +1,27 @@
+<%- include('partials/header') %>
+<h1>Account settings</h1>
+<div class="two-col">
+  <section class="panel">
+    <h2>Profile</h2>
+    <form method="post" action="/settings/profile" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Username<input value="<%= currentUser.username %>" disabled></label>
+      <label>Display name<input name="display_name" maxlength="60" value="<%= currentUser.display_name %>"></label>
+      <label>Email<input type="email" name="email" required value="<%= currentUser.email %>"></label>
+      <label>Location<input name="location" maxlength="100" value="<%= currentUser.location %>" placeholder="City or neighborhood"></label>
+      <label>About you<textarea name="bio" rows="4" maxlength="500"><%= currentUser.bio %></textarea></label>
+      <button class="btn btn-primary" type="submit">Save profile</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Change password</h2>
+    <form method="post" action="/settings/password" class="stack">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Current password<input type="password" name="current_password" required autocomplete="current-password"></label>
+      <label>New password<input type="password" name="new_password" required minlength="8" autocomplete="new-password"></label>
+      <label>Confirm new password<input type="password" name="new_password_confirm" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn btn-primary" type="submit">Change password</button>
+    </form>
+  </section>
+</div>
+<%- include('partials/footer') %>

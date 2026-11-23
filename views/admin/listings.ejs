@@ -1,0 +1,42 @@
+<%- include('../partials/header') %>
+<h1>Listings</h1>
+<%- include('../partials/admin-nav') %>
+<form class="row gap-sm toolbar" method="get">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search title or seller username">
+  <select name="status">
+    <option value="">Any status</option>
+    <% ['active','reserved','sold','removed'].forEach(function (s) { %><option <%= status === s ? 'selected' : '' %>><%= s %></option><% }) %>
+  </select>
+  <button class="btn btn-primary">Filter</button>
+</form>
+<div class="table-wrap"><table class="table">
+  <thead><tr><th></th><th>Listing</th><th>Seller</th><th>Status</th><th class="num">Price</th><th class="num">Reports</th><th>Moderate</th></tr></thead>
+  <tbody>
+  <% listings.forEach(function (l) { %>
+    <tr>
+      <td><img class="thumb-sm" src="<%= l.cover ? '/uploads/' + l.cover : '/static/img/placeholder.svg' %>" alt=""></td>
+      <td><a href="/listings/<%= l.id %>"><%= l.title %></a><br><span class="muted small"><%= l.category %> · <%= timeAgo(l.created_at) %></span><% if (l.removed_reason) { %><br><span class="small danger"><%= l.removed_reason %></span><% } %></td>
+      <td><a href="/admin/users/<%= l.seller_id %>">@<%= l.username %></a><% if (l.seller_banned) { %> <span class="tag tag-banned">Banned</span><% } %></td>
+      <td><span class="status status-l-<%= l.status %>"><%= l.status %></span></td>
+      <td class="num"><%= formatMoney(l.price_cents) %></td>
+      <td class="num <%= l.open_reports ? 'danger' : '' %>"><%= l.open_reports %></td>
+      <td>
+        <div class="row gap-sm">
+          <% if (l.status === 'removed') { %>
+            <form method="post" action="/admin/listings/<%= l.id %>/restore"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-ghost btn-sm">Restore</button></form>
+          <% } else { %>
+            <form method="post" action="/admin/listings/<%= l.id %>/remove" class="row gap-sm" data-confirm="Remove this listing from the marketplace?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input name="reason" required maxlength="300" placeholder="Reason" class="input-sm">
+              <button class="btn btn-danger btn-sm">Remove</button>
+            </form>
+          <% } %>
+          <form method="post" action="/admin/listings/<%= l.id %>/delete" data-confirm="Permanently delete this listing and its photos? This cannot be undone."><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="btn btn-danger-ghost btn-sm">Delete</button></form>
+        </div>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table></div>
+<% if (!listings.length) { %><p class="muted">No listings found.</p><% } %>
+<%- include('../partials/footer') %>
