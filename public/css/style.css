@@ -376,3 +376,9 @@ a.stat:hover { border-color: var(--green); text-decoration: none; }
   h1 { font-size: 1.5rem; }
   .panel { padding: 18px; }
 }
+
+/* New-photo previews with remove button */
+.thumb-new { position: relative; }
+.thumb-remove { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(29, 36, 32, .75); color: #fff; font-size: 1rem; line-height: 1; cursor: pointer; }
+.thumb-remove:hover { background: var(--red); }
+.thumb-cover { position: absolute; left: 4px; top: 4px; background: var(--green); color: #fff; font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; }

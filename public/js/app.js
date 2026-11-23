@@ -55,21 +55,64 @@
     });
   });
 
-  // Image previews on the listing form
+  // Image picker on the listing form: each new selection is ADDED to the previous ones
+  // (the browser would normally replace them). Selected photos can be removed individually.
+  const MAX_IMAGES = 8;
   document.querySelectorAll('input[type="file"][data-preview]').forEach((input) => {
-    input.addEventListener('change', () => {
-      const box = document.querySelector(input.getAttribute('data-preview'));
+    const box = document.querySelector(input.getAttribute('data-preview'));
+    const form = input.closest('form');
+    let selected = [];
+    const key = (f) => `${f.name}|${f.size}|${f.lastModified}`;
+
+    // Photos already saved on the listing (edit form) that are not ticked for removal.
+    const keptExisting = () =>
+      form ? form.querySelectorAll('input[name="remove_images"]:not(:checked)').length : 0;
+
+    function sync() {
+      const dt = new DataTransfer();
+      selected.forEach((f) => dt.items.add(f));
+      input.files = dt.files;
+      box.querySelectorAll('img').forEach((img) => URL.revokeObjectURL(img.src));
       box.innerHTML = '';
-      [...input.files].slice(0, 8).forEach((f) => {
+      selected.forEach((f, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'thumb thumb-new';
         const img = document.createElement('img');
         img.alt = f.name;
         img.src = URL.createObjectURL(f);
-        const wrap = document.createElement('div');
-        wrap.className = 'thumb';
-        wrap.appendChild(img);
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'thumb-remove';
+        rm.setAttribute('aria-label', `Remove ${f.name}`);
+        rm.textContent = '×';
+        rm.addEventListener('click', () => { selected.splice(i, 1); sync(); });
+        wrap.append(img, rm);
+        if (i === 0 && keptExisting() === 0) {
+          const tag = document.createElement('span');
+          tag.className = 'thumb-cover';
+          tag.textContent = 'Cover';
+          wrap.appendChild(tag);
+        }
         box.appendChild(wrap);
       });
-      if (input.files.length > 8) alert('Only the first 8 images will be uploaded.');
+    }
+
+    input.addEventListener('change', () => {
+      const room = MAX_IMAGES - keptExisting();
+      const known = new Set(selected.map(key));
+      const incoming = [...input.files].filter((f) => !known.has(key(f)));
+      const merged = selected.concat(incoming);
+      if (merged.length > room) alert(`A listing can have at most ${MAX_IMAGES} photos. Only the first ${Math.max(room, 0)} were kept.`);
+      selected = merged.slice(0, Math.max(room, 0));
+      sync();
+    });
+
+    // Re-check the limit when existing photos are ticked/unticked for removal.
+    form?.addEventListener('change', (e) => {
+      if (e.target.name !== 'remove_images') return;
+      const room = MAX_IMAGES - keptExisting();
+      if (selected.length > room) selected = selected.slice(0, Math.max(room, 0));
+      sync();
     });
   });
 
